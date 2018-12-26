@@ -16,18 +16,24 @@ class Station(object):
         self.ride_df = ride_df
         self.map_df = map_df
         self.df = self.ride_df[self.ride_df['stationname']==self.name].reset_index(drop=True)
+        self.summary = {}
+
         self.set_station_location()
         self.assign_dates()
         self.assign_seasons()
+        self.get_5yr_data()
         self.create_prophet_df()
 
     def set_station_location(self):
         '''get longitude & latitude from map df'''
+        try:
+            loc_string = self.map_df[self.map_df['STATION_NAME']==self.name].reset_index().loc[0,'Location']
+            lat,long = loc_string.strip('()').split(',')
+        except:
+            lat,long = 0,0
+        self.summary['latitude'] = float(lat)
+        self.summary['longitude'] = float(long)
 
-        loc_string = self.map_df[self.map_df['STATION_NAME']==self.name].reset_index().loc[0,'Location']
-        lat,long = loc_string.strip('()').split(',')
-        self.latitude = float(lat)
-        self.longitude = float(long)
 
     def assign_dates(self):
         '''add datetime format column; drop duplicate dates (keep max rides);
@@ -44,19 +50,46 @@ class Station(object):
         self.resampled_df = df
 
     def assign_seasons(self):
-        # extract season & rename day types,
+        '''extract season & rename day types, year'''
+
         df = self.resampled_df
         seasons = ['Winter','Winter','Spring','Spring','Spring','Summer',
                    'Summer','Summer','Fall','Fall','Fall','Winter']
         months = range(1,13)
         mtos = dict(zip(months,seasons))
         df['season'] = df.index.month.map(mtos)
+        df['year'] = df.index.year
         daytypes = df.daytype.unique().tolist()
+        print(daytypes)
         daytypedict = dict(zip(daytypes, ['Sun/Hol', 'Weekday', 'Sat']))
         df['daytype']=df['daytype'].map(daytypedict)
         self.preprocessed = df
 
+        self.summary['daily_mean'] = df['rides'].mean()
+        self.summary['daily_std'] = df['rides'].std()
+
+        for day in df.daytype.unique():
+            self.summary[f'{day}_mean'] = df.groupby(['daytype'])['rides'].mean()[day]
+            self.summary[f'{day}_std'] = df.groupby(['daytype'])['rides'].std()[day]
+
+    def get_5yr_data(self):
+        '''get ridership change rate over the past 5 [full] years'''
+
+        df = self.preprocessed
+        df_yrdiff=pd.DataFrame()
+        years_list_5 = np.arange(2017, 2012, -1)
+        df_yrdiff = df[df['year'].isin(years_list_5)]
+        df_yrdiff = df_yrdiff.groupby(['year'])['rides'].mean().reset_index()
+
+        self.summary['num_yrs_from_past_5'] = len(df_yrdiff) #number of years included from past 5 years
+        self.summary['5_yr_num_diff'] = df_yrdiff['rides'].diff().mean()
+        self.summary['5_yr_pct_diff'] = df_yrdiff['rides'].pct_change().mean()
+
+
+
 
     def create_prophet_df(self):
+        '''format df for fbprophet forcasting'''
+
         df = self.resampled_df.reset_index()
         self.prophet_df = df[['datetime','rides']].rename(columns={'datetime':'ds', 'rides':'y'})
