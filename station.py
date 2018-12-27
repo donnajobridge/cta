@@ -16,7 +16,7 @@ class Station(object):
         self.ride_df = ride_df
         self.map_df = map_df
         self.df = self.ride_df[self.ride_df['stationname']==self.name].reset_index(drop=True)
-        self.summary = {}
+        self.summary = {'station':self.name}
 
         self.set_station_location()
         self.assign_dates()
@@ -46,7 +46,6 @@ class Station(object):
         df.set_index('datetime', drop=True, inplace=True)
         df = df.resample('D').asfreq()
         df.drop(columns=['station_id', 'date'], inplace=True)
-
         self.resampled_df = df
 
     def assign_seasons(self):
@@ -60,9 +59,15 @@ class Station(object):
         df['season'] = df.index.month.map(mtos)
         df['year'] = df.index.year
         daytypes = df.daytype.unique().tolist()
-        print(daytypes)
         daytypedict = dict(zip(daytypes, ['Sun/Hol', 'Weekday', 'Sat']))
         df['daytype']=df['daytype'].map(daytypedict)
+
+        num_na = df.isna().values.sum()
+        if num_na:
+            df.dropna(inplace=True)
+
+        self.summary['num_na'] = num_na
+
         self.preprocessed = df
 
         self.summary['daily_mean'] = df['rides'].mean()
