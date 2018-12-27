@@ -34,6 +34,9 @@ class Station(object):
         if self.name == 'Washington/State':
             lat = 41.8831
             long = -87.6287
+        elif self.name =='Addison-North Main':
+            lat = 41.9472
+            long = -87.6536
 
         self.summary['latitude'] = float(lat)
         self.summary['longitude'] = float(long)
@@ -62,8 +65,11 @@ class Station(object):
         mtos = dict(zip(months,seasons))
         df['season'] = df.index.month.map(mtos)
         df['year'] = df.index.year
-        daytypes = df.daytype.unique().tolist()
-        daytypedict = dict(zip(daytypes, ['Sun/Hol', 'Weekday', 'Sat']))
+        daytypes = ['U', 'W', 'A']
+        self.day_labels = ['Sun/Hol', 'Weekday', 'Sat']
+        self.season_labels = list(set(seasons))
+
+        daytypedict = dict(zip(daytypes, self.day_labels))
         df['daytype']=df['daytype'].map(daytypedict)
 
         num_na = df.isna().values.sum()
@@ -94,6 +100,30 @@ class Station(object):
         self.summary['5_yr_num_diff'] = df_yrdiff['rides'].diff().mean()
         self.summary['5_yr_pct_diff'] = df_yrdiff['rides'].pct_change().mean()
 
+
+    def make_layered_hist(self, varname='daytype'):
+        if varname == 'daytype':
+            varlist = self.day_labels
+        elif varname == 'season':
+            varlist = self.season_labels
+
+        fig, ax = plt.subplots()
+        for var in varlist:
+            condarray = self.preprocessed[(self.preprocessed[varname]==var)]
+            dist=sns.distplot(condarray['rides'], ax=ax, label=var)
+        ax.legend()
+        ax.set_xlabel('# of Rides Daily', fontsize=16)
+        ax.set_ylabel('Frequency', fontsize=16)
+        ax.set_xlim([0,25000])
+        plt.title(self.name +' Daily Ridership', fontsize=20)
+        plt.tight_layout()
+        dist=dist.get_figure()
+        fname = 'hist' +'_' + self.name +'_'+varname+ '.png'
+        fname = fname.replace('/','_')
+        print(fname)
+        dist.savefig('figs/'+fname)
+        plt.clf()
+        return fig, ax
 
     def create_prophet_df(self):
         '''format df for fbprophet forcasting'''
