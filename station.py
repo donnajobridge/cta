@@ -31,6 +31,10 @@ class Station(object):
             lat,long = loc_string.strip('()').split(',')
         except:
             lat,long = 0,0
+        if self.name == 'Washington/State':
+            lat = 41.8831
+            long = -87.6287
+
         self.summary['latitude'] = float(lat)
         self.summary['longitude'] = float(long)
 
@@ -89,8 +93,6 @@ class Station(object):
         self.summary['num_yrs_from_past_5'] = len(df_yrdiff) #number of years included from past 5 years
         self.summary['5_yr_num_diff'] = df_yrdiff['rides'].diff().mean()
         self.summary['5_yr_pct_diff'] = df_yrdiff['rides'].pct_change().mean()
-
-
 
 
     def create_prophet_df(self):
