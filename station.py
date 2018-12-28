@@ -37,6 +37,9 @@ class Station(object):
         elif self.name =='Addison-North Main':
             lat = 41.9472
             long = -87.6536
+        elif self.name == 'Monroe/State':
+            lat = 41.8807
+            long = -87.6277
 
         self.summary['latitude'] = float(lat)
         self.summary['longitude'] = float(long)
