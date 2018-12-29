@@ -35,12 +35,21 @@ class Station(object):
         if self.name == 'Washington/State':
             lat = 41.8831
             long = -87.6287
-        elif self.name =='Addison-North Main':
+        elif self.name == 'Addison-North Main':
             lat = 41.9472
             long = -87.6536
         elif self.name == 'Monroe/State':
             lat = 41.8807
             long = -87.6277
+        elif self.name == 'Kedzie-Midway':
+            lat = 41.8043
+            long = -87.7044
+        elif self.name == 'Damen-Brown':
+            lat = 41.966286
+            long = -87.678639
+        elif self.name == 'California/Milwaukee':
+            lat = 41.921939
+            long = -87.69689
 
         self.summary['latitude'] = float(lat)
         self.summary['longitude'] = float(long)
@@ -153,7 +162,9 @@ class Station(object):
             drop=True)
             forecast_data['ds']=pd.to_datetime(forecast_data['ds'])
             forecast_data['year']=forecast_data.ds.dt.year
-
+            self.forecast_all = forecast
+            self.forecast_future = forecast_data
+            self.model=m
             for row, ldf in forecast_data.groupby('year'):
                 mean = ldf['yhat'].mean()
                 std = ldf['yhat'].std()
