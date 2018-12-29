@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
+from fbprophet import Prophet
 
 
 '''input this information for each class instantiation:
@@ -94,6 +95,11 @@ class Station(object):
         '''get ridership change rate over the past 5 [full] years'''
 
         df = self.preprocessed
+        # get latest years mean/std
+        for year in [2017, 2018]:
+            self.summary[f'{year}_mean'] = df[df['year']==year]['rides'].mean()
+            self.summary[f'{year}_std'] = df[df['year']==year]['rides'].std()
+
         df_yrdiff=pd.DataFrame()
         years_list_5 = np.arange(2017, 2012, -1)
         df_yrdiff = df[df['year'].isin(years_list_5)]
@@ -133,3 +139,24 @@ class Station(object):
 
         df = self.resampled_df.reset_index()
         self.prophet_df = df[['datetime','rides']].rename(columns={'datetime':'ds', 'rides':'y'})
+
+    def run_prophet(self):
+        df = self.prophet_df
+        years_in_future_5=365*5+1
+        final_real_date = df.iloc[-1].ds
+        if final_real_date == pd.to_datetime('06-30-2018'):
+            m = Prophet()
+            m.fit(df)
+            future = m.make_future_dataframe(periods=years_in_future_5)
+            forecast = m.predict(future)
+            forecast_data = forecast[forecast['ds']>final_real_date][['ds', 'yhat']].reset_index(
+            drop=True)
+            forecast_data['ds']=pd.to_datetime(forecast_data['ds'])
+            forecast_data['year']=forecast_data.ds.dt.year
+
+            for row, ldf in forecast_data.groupby('year'):
+                mean = ldf['yhat'].mean()
+                std = ldf['yhat'].std()
+
+                self.summary[f'{row}_predicted_mean'] = mean
+                self.summary[f'{row}_predicted_std'] = std
