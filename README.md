@@ -1,6 +1,5 @@
 ## Analysis of CTA train data
 
-
 #cta_eda.ipynb
 This notebook conducts some initial exploratory analysis of the train data.
 
@@ -15,4 +14,8 @@ This notebook reads in the station summary dataframe and conducts some analysis.
 #select_pie_location.ipynb
 This notebook finds the best CTA station location to open up a new pie shop. An interactive scatterplot shows stations plotted with mean daily ridership in 2018 on the x axis and projected ridership growth from 2018 to 2023 on the y axis. Stations with midrange mean daily ridership in 2018 were targeted. Out of these midrange stations, I chose the stations with the highest projected growth in 2023. These stations are highlighted in green.
 
-I next applied the fbprophet forecast model to the selected stations. A plot for each station is made showing historical data and projected ridership.
+I next applied the fbprophet forecast model to the selected stations. A plot for each station is made showing historical data and projected ridership through 2023.
+
+
+#cta_maps.ipynb
+This notebook creates a Chicago map with recommended pie shop locations and their corresponding neighborhoods highlighted.
