@@ -3,6 +3,7 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 from fbprophet import Prophet
+from fbprophet.diagnostics import cross_validation, performance_metrics
 
 
 '''input this information for each class instantiation:
@@ -171,3 +172,8 @@ class Station(object):
 
                 self.summary[f'{row}_predicted_mean'] = mean
                 self.summary[f'{row}_predicted_std'] = std
+
+
+    def run_prophet_diagnostics(self):
+        self.cv = cross_validation(self.model, initial='365 days', period='180 days', horizon = '180 days')
+        self.performance = performance_metrics(self.cv)
