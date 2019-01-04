@@ -152,12 +152,20 @@ class Station(object):
 
     def run_prophet(self):
         df = self.prophet_df
+
+        # replace 0s with NANs
+        zeros = df[df['y']==0].index.values
+        df.loc[zeros, 'y']=None
+        # set floor & cap (can't go below 0 riders per day)
         df['cap']=40000
         df['floor']=0
         years_in_future_5=365*5+1
         final_real_date = df.iloc[-1].ds
+        # only run for stations currently in operation
         if final_real_date == pd.to_datetime('06-30-2018'):
-            m = Prophet(growth='logistic')
+            m = Prophet(growth='logistic', changepoint_range=0.9,
+            holidays_prior_scale=.5)
+            m.add_country_holidays(country_name='US')
             m.fit(df)
             future = m.make_future_dataframe(periods=years_in_future_5)
             future['cap']=40000
@@ -179,5 +187,5 @@ class Station(object):
 
 
     def run_prophet_diagnostics(self):
-        self.cv = cross_validation(self.model, initial='365 days', period='180 days', horizon = '180 days')
+        self.cv = cross_validation(self.model, horizon = '180 days')
         self.performance = performance_metrics(self.cv)
