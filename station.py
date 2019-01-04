@@ -152,12 +152,16 @@ class Station(object):
 
     def run_prophet(self):
         df = self.prophet_df
+        df['cap']=40000
+        df['floor']=0
         years_in_future_5=365*5+1
         final_real_date = df.iloc[-1].ds
         if final_real_date == pd.to_datetime('06-30-2018'):
-            m = Prophet()
+            m = Prophet(growth='logistic')
             m.fit(df)
             future = m.make_future_dataframe(periods=years_in_future_5)
+            future['cap']=40000
+            future['floor']=0
             forecast = m.predict(future)
             forecast_data = forecast[forecast['ds']>final_real_date][['ds', 'yhat']].reset_index(
             drop=True)
